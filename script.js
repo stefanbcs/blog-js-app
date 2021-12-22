@@ -43,7 +43,7 @@ let blog = {
   ],
   navigation: ["Home", "Travel updates", "Reviews", "About", "Contact"],
 }; */
-
+const container = window.document.getElementById("container");
 let navigation = ["Home", "Travel updates", "Reviews", "About", "Contact"];
 
 let navContainer = window.document.getElementById("nav-container");
@@ -98,10 +98,9 @@ function deleteArticle(id) {
   fetch("http://localhost:3000/articles/" + id, {
     method: "DELETE",
   })
-    .then(json)
     .then(function (data) {
       console.log("Request succeeded with JSON response", data);
-      window.location.hash = "#/home/";
+      gotoHash(`#/home/`);
     })
     .catch(function (error) {
       console.log("Request failed", error);
@@ -109,7 +108,7 @@ function deleteArticle(id) {
 }
 
 function addArticle() {
-  const titleInput = document.getElementById("modal__title");
+  const titleInput = document.getElementById("title");
   const categoryInput = document.getElementById("category");
   const authorInput = document.getElementById("author");
   const imageInput = document.getElementById("image_url");
@@ -150,7 +149,7 @@ function addArticle() {
       .then(json)
       .then(function (data) {
         console.log("Request succeeded with JSON response", data);
-        window.location.hash = "#/home/";
+        gotoHash(`#/home/`);
       })
       .catch(function (error) {
         console.log("Request failed", error);
@@ -158,17 +157,71 @@ function addArticle() {
   }
 }
 
-function editArticle(id) {
-  fetch("http://localhost:3000/articles/" + id, {
-    method: "put",
-  })
-    .then(json)
-    .then(function (data) {
-      console.log("Request succeeded with JSON response", data);
-    })
-    .catch(function (error) {
-      console.log("Request failed", error);
-    });
+function editArticle(article, id) {
+  const titleInput = document.getElementById("title");
+  const categoryInput = document.getElementById("category");
+  const authorInput = document.getElementById("author");
+  const imageInput = document.getElementById("image_url");
+  const dateInput = document.getElementById("date");
+  const sayingInput = document.getElementById("saying");
+  const contentInput1 = document.getElementById("paragraph1");
+  const contentInput2 = document.getElementById("paragraph2");
+
+  titleInput.value = article.title;
+  categoryInput.value = article.category;
+  authorInput.value = article.author;
+  imageInput.value = article.img;
+  dateInput.value = article.date;
+  sayingInput.value = article.saying;
+  contentInput1.value = article.paragraph1;
+  contentInput2.value = article.paragraph2;
+
+  document.getElementById("id01").style.display = "block";
+  document.getElementById("cancel").addEventListener("click", () => {
+    clearModal();
+    id = null;
+    document.getElementById("id01").style.display = "none";
+  });
+  document.getElementById("save").addEventListener("click", () => {
+    if (
+      titleInput.value !== "" &&
+      categoryInput.value !== "" &&
+      authorInput.value !== "" &&
+      imageInput.value !== "" &&
+      dateInput.value !== "" &&
+      sayingInput.value !== "" &&
+      contentInput1.value !== "" &&
+      contentInput2.value !== ""
+    ) {
+      object = {
+        title: titleInput.value,
+        category: categoryInput.value,
+        author: authorInput.value,
+        date: dateInput.value,
+        img: imageInput.value,
+        saying: sayingInput.value,
+        paragraph1: contentInput1.value,
+        paragraph2: contentInput2.value,
+      };
+
+      fetch("http://localhost:3000/articles/" + id, {
+        method: "put",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(object),
+      })
+        .then(json)
+        .then(function (data) {
+          console.log("Request succeeded with JSON response", data);
+          id = null;
+          gotoHash(`#/home/`);
+        })
+        .catch(function (error) {
+          console.log("Request failed", error);
+        });
+    }
+  });
 }
 
 function createArticle(article, index) {
@@ -182,7 +235,7 @@ function createArticle(article, index) {
   const info = createArticleInfo(article);
   domArticle.appendChild(info);
 
-  const actions = createArticleActions(article.id);
+  const actions = createArticleActions(article, article.id);
   domArticle.appendChild(actions);
 
   const domImg = document.createElement("img");
@@ -290,7 +343,7 @@ function createArticleInfo(article) {
   return ul;
 }
 
-function createArticleActions(id) {
+function createArticleActions(article, id) {
   let div = document.createElement("div");
   div.className = "actions__container";
 
@@ -298,6 +351,7 @@ function createArticleActions(id) {
   button1.setAttribute("type", "button");
   button1.setAttribute("class", "actions__btn");
   button1.innerText = "Edit";
+  button1.addEventListener("click", () => editArticle(article, id));
   div.appendChild(button1);
 
   const span = document.createElement("span");
@@ -343,7 +397,7 @@ function createAdd() {
   const domButton = document.createElement("button");
   domButton.setAttribute("type", "button");
   domButton.setAttribute("class", "button open__modal");
-  domButton.addEventListener("click", () => displayModal("add"));
+  domButton.addEventListener("click", () => displayModal());
   domButton.innerText = "+ Add Article";
   addContainer.appendChild(domButton);
 
@@ -373,6 +427,7 @@ function createModal() {
   let overlay = document.createElement("div");
   overlay.setAttribute("class", "modal__overlay");
   overlay.setAttribute("id", "id01");
+  overlay.style.display = "none";
 
   let modal = document.createElement("div");
   modal.setAttribute("class", "modal");
@@ -429,9 +484,11 @@ function createModal() {
   modalButtons.setAttribute("class", "modal__buttons");
 
   let cancelBttn = document.createElement("button");
+  cancelBttn.setAttribute("id", "cancel");
   cancelBttn.setAttribute("class", "button close__modal");
   cancelBttn.setAttribute("type", "button");
   cancelBttn.addEventListener("click", () => {
+    clearModal();
     document.getElementById("id01").style.display = "none";
   });
   cancelBttn.textContent = "Cancel";
@@ -450,22 +507,21 @@ function createModal() {
   document.body.appendChild(overlay);
 }
 
-function displayModal(operation) {
-  if (operation == "add") {
-    document.getElementById("id01").style.display = "block";
-    document
-      .getElementById("save")
-      .addEventListener("click", () => addArticle());
-  }
-  if (operation == "edit") {
-    document.getElementById("id01").style.display = "block";
-    document
-      .getElementById("save")
-      .addEventListener("click", () => editArticle());
-  }
+function clearModal() {
+  document.getElementById("title").value = "";
+  document.getElementById("category").value = "";
+  document.getElementById("author").value = "";
+  document.getElementById("image_url").value = "";
+  document.getElementById("date").value = "";
+  document.getElementById("saying").value = "";
+  document.getElementById("paragraph1").value = "";
+  document.getElementById("paragraph2").value = "";
 }
 
-const container = window.document.getElementById("container");
+function displayModal() {
+  document.getElementById("id01").style.display = "block";
+  document.getElementById("save").addEventListener("click", () => addArticle());
+}
 
 function createPage(blog) {
   clearContainer();

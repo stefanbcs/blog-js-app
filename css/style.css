@@ -343,6 +343,7 @@ p {
 }
 
 #say {
+  width: 100%;
   background-color: #ffe3e3;
   color: #000000;
   font-family: "Montserrat";
