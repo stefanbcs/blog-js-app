@@ -287,7 +287,7 @@ img {
   padding-right: 75px;
 }
 
-.modal__title {
+#modal__title {
   color: #1e1e1e;
   font-family: "Montserrat", sans-serif;
   font-size: 46px;

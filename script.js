@@ -101,6 +101,7 @@ function deleteArticle(id) {
     .then(json)
     .then(function (data) {
       console.log("Request succeeded with JSON response", data);
+      window.location.hash = "#/home/";
     })
     .catch(function (error) {
       console.log("Request failed", error);
@@ -125,7 +126,8 @@ function addArticle() {
     imageInput.value !== "" &&
     dateInput.value !== "" &&
     sayingInput.value !== "" &&
-    contentInput.value !== ""
+    contentInput1.value !== "" &&
+    contentInput2.value !== ""
   ) {
     object = {
       title: titleInput.value,
@@ -138,7 +140,7 @@ function addArticle() {
       paragraph2: contentInput2.value,
     };
 
-    fetch("http://localhost:3000/dogs", {
+    fetch("http://localhost:3000/articles", {
       method: "post",
       headers: {
         "Content-type": "application/json",
@@ -148,6 +150,7 @@ function addArticle() {
       .then(json)
       .then(function (data) {
         console.log("Request succeeded with JSON response", data);
+        window.location.hash = "#/home/";
       })
       .catch(function (error) {
         console.log("Request failed", error);
@@ -168,7 +171,7 @@ function editArticle(id) {
     });
 }
 
-function createArticle(article, i) {
+function createArticle(article, index) {
   let domArticle = document.createElement("article");
 
   const domTitle = document.createElement("h2");
@@ -179,7 +182,7 @@ function createArticle(article, i) {
   const info = createArticleInfo(article);
   domArticle.appendChild(info);
 
-  const actions = createArticleActions();
+  const actions = createArticleActions(article.id);
   domArticle.appendChild(actions);
 
   const domImg = document.createElement("img");
@@ -189,14 +192,14 @@ function createArticle(article, i) {
   const content = createArticleContent(article);
   domArticle.appendChild(content);
 
-  if (i != undefined) {
+  if (index != undefined) {
     const domReadMore = document.createElement("div");
     domReadMore.className = "readmore__container";
 
     const domButton = document.createElement("button");
-    domButton.setAttribute("id", i);
+    domButton.setAttribute("id", index);
     domButton.setAttribute("class", "button");
-    domButton.addEventListener("click", () => gotoHash(`#/details/${i}`));
+    domButton.addEventListener("click", () => gotoHash(`#/details/${index}`));
     //domButton.setAttribute("onclick", "createDetails(this.id)");
     //domButton.setAttribute("onclick", "window.location.href='details.html';");
     domButton.innerText = "Read More";
@@ -287,7 +290,7 @@ function createArticleInfo(article) {
   return ul;
 }
 
-function createArticleActions() {
+function createArticleActions(id) {
   let div = document.createElement("div");
   div.className = "actions__container";
 
@@ -306,6 +309,7 @@ function createArticleActions() {
   button2.setAttribute("type", "button");
   button2.setAttribute("class", "actions__btn");
   button2.innerText = "Delete";
+  button2.addEventListener("click", () => deleteArticle(id));
   div.appendChild(button2);
 
   return div;
@@ -339,7 +343,7 @@ function createAdd() {
   const domButton = document.createElement("button");
   domButton.setAttribute("type", "button");
   domButton.setAttribute("class", "button open__modal");
-  domButton.setAttribute("onclick", "displayModal()");
+  domButton.addEventListener("click", () => displayModal("add"));
   domButton.innerText = "+ Add Article";
   addContainer.appendChild(domButton);
 
@@ -374,10 +378,9 @@ function createModal() {
   modal.setAttribute("class", "modal");
 
   const exit = document.createElement("span");
-  exit.setAttribute(
-    "onclick",
-    "document.getElementById('id01').style.display='none'"
-  );
+  exit.addEventListener("click", () => {
+    document.getElementById("id01").style.display = "none";
+  });
   exit.setAttribute("class", "open__modal");
   exit.innerHTML = "&times;";
 
@@ -387,7 +390,7 @@ function createModal() {
   modalContent.setAttribute("class", "modal__content");
 
   let title = document.createElement("h2");
-  title.setAttribute("class", "modal__title");
+  title.setAttribute("id", "modal__title");
   title.textContent = "Add/Edit article";
   modalContent.appendChild(title);
 
@@ -396,7 +399,7 @@ function createModal() {
 
   for (let i = 0; i < inputs.length; i++) {
     let input = document.createElement("input");
-    input.setAttribute("id", "input");
+    input.setAttribute("id", inputs[i]);
     input.setAttribute("class", "input");
     input.setAttribute("type", "text");
     input.setAttribute("placeholder", "Please enter " + inputs[i]);
@@ -414,7 +417,7 @@ function createModal() {
   modalContent.appendChild(textarea1);
 
   let textarea2 = document.createElement("textarea");
-  textarea1.setAttribute("id", "paragraph2");
+  textarea2.setAttribute("id", "paragraph2");
   textarea2.setAttribute("class", "textarea");
   textarea2.setAttribute("name", "content");
   textarea2.setAttribute("cols", "28");
@@ -428,10 +431,9 @@ function createModal() {
   let cancelBttn = document.createElement("button");
   cancelBttn.setAttribute("class", "button close__modal");
   cancelBttn.setAttribute("type", "button");
-  cancelBttn.setAttribute(
-    "onclick",
-    "document.getElementById('id01').style.display='none'"
-  );
+  cancelBttn.addEventListener("click", () => {
+    document.getElementById("id01").style.display = "none";
+  });
   cancelBttn.textContent = "Cancel";
   modalButtons.appendChild(cancelBttn);
 
@@ -448,12 +450,19 @@ function createModal() {
   document.body.appendChild(overlay);
 }
 
-function displayModal() {
-  createModal();
-  document.getElementById("id01").style.display = "block";
-  document.getElementById("save").onclick = function () {
-    addArticle();
-  };
+function displayModal(operation) {
+  if (operation == "add") {
+    document.getElementById("id01").style.display = "block";
+    document
+      .getElementById("save")
+      .addEventListener("click", () => addArticle());
+  }
+  if (operation == "edit") {
+    document.getElementById("id01").style.display = "block";
+    document
+      .getElementById("save")
+      .addEventListener("click", () => editArticle());
+  }
 }
 
 const container = window.document.getElementById("container");
@@ -473,9 +482,10 @@ function createPage(blog) {
   }
 
   container.appendChild(main);
-
   //const footer = createFooter();
   //container.appendChild(footer);
+  createModal();
+  document.getElementById("id01").style.display = "none";
 }
 
 function createDetails(articles, id) {
